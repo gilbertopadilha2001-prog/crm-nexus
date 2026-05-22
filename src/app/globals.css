@@ -9,7 +9,7 @@
   --color-foreground: var(--foreground);
   --font-sans: "Inter", system-ui, sans-serif;
   --font-mono: ui-monospace, monospace;
-  --font-display: "Space Grotesk", "Inter", system-ui, sans-serif;
+  --font-display: "DM Sans", "Inter", system-ui, sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -49,49 +49,65 @@
 }
 
 :root {
-  /* Base palette — warm off-white bg, dark navy text, gold primary */
-  --background: hsl(40, 20%, 97%);
-  --foreground: hsl(220, 20%, 12%);
-  --card: hsl(0, 0%, 100%);
-  --card-foreground: hsl(220, 20%, 12%);
-  --popover: hsl(0, 0%, 100%);
-  --popover-foreground: hsl(220, 20%, 12%);
-  --primary: hsl(42, 92%, 50%);
-  --primary-foreground: hsl(220, 20%, 12%);
-  --secondary: hsl(40, 15%, 93%);
-  --secondary-foreground: hsl(220, 20%, 12%);
-  --muted: hsl(40, 15%, 95%);
-  --muted-foreground: hsl(220, 10%, 46%);
+  /* Base palette — Nexus Inovações Imobiliárias */
+  --background: #F5F7FA;
+  --foreground: #1D1E20;
+  --card: #FFFFFF;
+  --card-foreground: #1D1E20;
+  --popover: #FFFFFF;
+  --popover-foreground: #1D1E20;
+  --primary: #FFD470;
+  --primary-foreground: #0D141A;
+  --secondary: #F2F3F6;
+  --secondary-foreground: #1D1E20;
+  --muted: #F2F3F6;
+  --muted-foreground: #56585E;
   --accent: hsl(42, 60%, 92%);
-  --accent-foreground: hsl(42, 80%, 25%);
-  --destructive: hsl(0, 72%, 51%);
-  --destructive-foreground: hsl(0, 0%, 100%);
+  --accent-foreground: #0D141A;
+  --destructive: #F20606;
+  --destructive-foreground: #FFFFFF;
   --border: hsl(40, 15%, 88%);
   --input: hsl(40, 15%, 88%);
-  --ring: hsl(42, 92%, 50%);
+  --ring: #FFD470;
   --radius: 0.75rem;
 
-  /* Sidebar — dark navy */
-  --sidebar: hsl(220, 25%, 10%);
+  /* Sidebar — dark navy (Nexus) */
+  --sidebar: #0D141A;
   --sidebar-foreground: hsl(40, 10%, 80%);
-  --sidebar-primary: hsl(42, 92%, 55%);
-  --sidebar-primary-foreground: hsl(0, 0%, 100%);
-  --sidebar-accent: hsl(220, 20%, 16%);
-  --sidebar-accent-foreground: hsl(42, 70%, 65%);
+  --sidebar-primary: #FFD470;
+  --sidebar-primary-foreground: #0D141A;
+  --sidebar-accent: #1F2937;
+  --sidebar-accent-foreground: #FFD470;
   --sidebar-border: hsl(220, 18%, 18%);
-  --sidebar-ring: hsl(42, 92%, 55%);
+  --sidebar-ring: #FFD470;
 
   /* Semantic colors */
-  --success: hsl(142, 72%, 40%);
-  --success-foreground: hsl(0, 0%, 100%);
-  --warning: hsl(38, 92%, 50%);
-  --warning-foreground: hsl(0, 0%, 100%);
+  --success: #10B981;
+  --success-foreground: #FFFFFF;
+  --warning: #F59E0B;
+  --warning-foreground: #FFFFFF;
   --info: hsl(200, 80%, 50%);
-  --info-foreground: hsl(0, 0%, 100%);
+  --info-foreground: #FFFFFF;
+
+  /* Nexus brand extras */
+  --nexus-gold: #FFD470;
+  --nexus-dark: #0D141A;
+  --nexus-navy: #0F2744;
+  --nexus-surface: #1D1E20;
+  --nexus-red: #F20606;
+  --nexus-pink: #FC5185;
+
+  /* Kanban stage colors */
+  --kanban-novo: #FFD470;
+  --kanban-qualificando: #3B82F6;
+  --kanban-proposta: #8B5CF6;
+  --kanban-negociando: #F59E0B;
+  --kanban-fechado: #10B981;
+  --kanban-perdido: #EF4444;
 
   /* Gradients */
-  --gradient-primary: linear-gradient(135deg, hsl(42, 92%, 50%), hsl(38, 85%, 55%));
-  --gradient-sidebar: linear-gradient(180deg, hsl(220, 25%, 8%), hsl(220, 25%, 14%));
+  --gradient-primary: linear-gradient(135deg, #FFD470, #F59E0B);
+  --gradient-sidebar: linear-gradient(180deg, #0D141A, #1F2937);
 
   /* Shadows */
   --shadow-card-value: 0 1px 3px 0 hsl(220 20% 12% / 0.06), 0 1px 2px -1px hsl(220 20% 12% / 0.06);

@@ -1,53 +1,39 @@
+version: "3.8"
+
 services:
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: runner
-    image: ai-website-cloner:latest
-    container_name: ai-website-cloner
-    restart: unless-stopped
-    ports:
-      - "${PORT:-3000}:3000"
+  nexus-crm:
+    image: nexus-crm:latest
+    networks:
+      - iapadilhaNet
     environment:
       - NODE_ENV=production
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
       - NEXT_TELEMETRY_DISABLED=1
-    env_file:
-      - path: .env.local
-        required: false
-      - path: .env
-        required: false
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/ || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
+      - DATABASE_URL=postgresql://postgres:98e4b91c441af09d6afa7789c6624ae7@postgres:5432/nexus_crm
+      - AUTH_SECRET=nexus-crm-secret-key-change-in-production-2026
+      - AUTH_URL=https://crm.nexusinovacoesimobiliarias.com.br
+      - AUTH_TRUST_HOST=true
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.nexuscrm.rule=Host(`crm.nexusinovacoesimobiliarias.com.br`)
+        - traefik.http.routers.nexuscrm.entrypoints=websecure
+        - traefik.http.routers.nexuscrm.tls.certresolver=letsencryptresolver
+        - traefik.http.routers.nexuscrm.service=nexuscrm
+        - traefik.http.routers.nexuscrm.priority=10
+        - traefik.http.services.nexuscrm.loadbalancer.server.port=3000
+        - traefik.http.services.nexuscrm.loadbalancer.passHostHeader=true
+      resources:
+        limits:
+          cpus: "1"
+          memory: 512M
 
-  dev:
-    build:
-      context: .
-      dockerfile: Dockerfile.dev
-    image: ai-website-cloner:dev
-    container_name: ai-website-cloner-dev
-    restart: unless-stopped
-    ports:
-      - "${DEV_PORT:-3001}:3000"
-    environment:
-      - NODE_ENV=development
-      - NEXT_TELEMETRY_DISABLED=1
-    env_file:
-      - path: .env.local
-        required: false
-      - path: .env
-        required: false
-    volumes:
-      - .:/app
-      - /app/node_modules
-      - /app/.next
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/ || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 15s
+networks:
+  iapadilhaNet:
+    external: true

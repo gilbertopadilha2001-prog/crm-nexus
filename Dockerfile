@@ -48,6 +48,13 @@ COPY . .
 
 ENV NODE_ENV=production
 
+# Prisma needs DATABASE_URL at build time for client generation
+# This is a dummy URL — the real one is set at runtime
+ENV DATABASE_URL="postgresql://build:build@localhost:5432/build"
+
+# Generate Prisma Client
+RUN npx prisma generate
+
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry
 # Uncomment the following line in case you want to disable telemetry during the build.

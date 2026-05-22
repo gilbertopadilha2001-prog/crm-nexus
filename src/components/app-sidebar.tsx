@@ -12,11 +12,9 @@ import {
   Kanban,
   House,
   UserCheck,
-  TrendingUp,
-  CalendarCheck,
-  Gavel,
-  BrainCircuit,
   Settings,
+  Target,
+  Clock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -24,15 +22,13 @@ const navMain = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/conversations", label: "Conversas", icon: MessageSquare },
   { href: "/contacts", label: "Contatos", icon: Users },
+  { href: "/crm", label: "CRM Kanban", icon: Kanban },
+  { href: "/lead-distribution", label: "Distribuição", icon: Target },
+  { href: "/recent-contacts", label: "Últimos Contatos", icon: Clock },
   { href: "/broadcasts", label: "Disparos", icon: Send },
   { href: "/followups", label: "Follow-ups", icon: RotateCcw },
-  { href: "/crm", label: "CRM Kanban", icon: Kanban },
-  { href: "/products", label: "Catálogo", icon: House },
+  { href: "/products", label: "Imóveis", icon: House },
   { href: "/agents", label: "Corretores", icon: UserCheck },
-  { href: "/agents-dashboard", label: "Desempenho", icon: TrendingUp },
-  { href: "/visits", label: "Agendamento", icon: CalendarCheck },
-  { href: "/auctions", label: "Leilões Caixa", icon: Gavel },
-  { href: "/ai-summaries", label: "Resumos IA", icon: BrainCircuit },
 ];
 
 const navSystem = [
@@ -65,7 +61,7 @@ export function AppSidebar({ isCollapsed }: AppSidebarProps) {
       >
         <div className="w-9 h-9 rounded-full overflow-hidden bg-white flex items-center justify-center flex-shrink-0 ring-1 ring-sidebar-border">
           <Image
-            src="/images/nexus-logo.avif"
+            src="/images/nexus-logo.png"
             alt="Nexus Imóveis"
             width={36}
             height={36}
@@ -76,7 +72,7 @@ export function AppSidebar({ isCollapsed }: AppSidebarProps) {
           <div className="flex flex-col min-w-0">
             <span
               className="font-display font-bold text-sm leading-tight truncate"
-              style={{ color: "hsl(42, 92%, 55%)" }}
+              style={{ color: "var(--nexus-gold)" }}
             >
               Nexus Imóveis
             </span>
@@ -84,7 +80,7 @@ export function AppSidebar({ isCollapsed }: AppSidebarProps) {
               className="text-[11px] leading-tight truncate"
               style={{ color: "hsl(40, 10%, 60%)" }}
             >
-              CRM WhatsApp · Curitiba
+              Dashboard CRM
             </span>
           </div>
         )}
@@ -111,7 +107,7 @@ export function AppSidebar({ isCollapsed }: AppSidebarProps) {
         <div className="p-2">
           <div className="rounded-lg p-3" style={{ backgroundColor: "hsl(220, 20%, 16%)" }}>
             <p className="text-xs mb-1.5" style={{ color: "hsl(40, 10%, 65%)" }}>
-              Conectado via Uazapi
+              Evolution API
             </p>
             <span
               className="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full"
