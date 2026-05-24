@@ -387,7 +387,7 @@ export default function ConversationsPage() {
               <h3 className="font-display font-bold text-lg">Conectar WhatsApp</h3>
               <button onClick={() => { setShowQR(false); setQrCode(null); }} className="p-1 rounded-lg hover:bg-muted"><X className="h-5 w-5" /></button>
             </div>
-            {(() => {
+            {wa && (() => {
               const helpMsg = getDisconnectHelp(wa.disconnectionCode, wa.disconnectionReason);
               return helpMsg ? (
                 <div className="mb-4 rounded-lg px-3 py-2 text-xs text-center"
