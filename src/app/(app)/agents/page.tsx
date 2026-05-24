@@ -49,6 +49,7 @@ export default function AgentsPage() {
 
   // Form fields
   const [formName, setFormName] = useState("");
+  const [formUsername, setFormUsername] = useState("");
   const [formEmail, setFormEmail] = useState("");
   const [formPhone, setFormPhone] = useState("");
   const [formCreci, setFormCreci] = useState("");
@@ -83,6 +84,7 @@ export default function AgentsPage() {
 
   const clearForm = () => {
     setFormName("");
+    setFormUsername("");
     setFormEmail("");
     setFormPhone("");
     setFormCreci("");
@@ -103,6 +105,7 @@ export default function AgentsPage() {
       setSelectedAgent(agent);
       if (type === "edit") {
         setFormName(agent.name);
+        setFormUsername("");
         setFormEmail(agent.email);
         setFormPhone(agent.phone || "");
         setFormCreci(agent.creci || "");
@@ -120,8 +123,8 @@ export default function AgentsPage() {
 
   // CREATE
   const handleCreate = async () => {
-    if (!formName || !formEmail || !formPassword) {
-      setFeedback({ type: "error", msg: "Nome, email e senha são obrigatórios" });
+    if (!formName || !formUsername || !formEmail || !formPassword) {
+      setFeedback({ type: "error", msg: "Nome, usuário, email e senha são obrigatórios" });
       return;
     }
     setSaving(true);
@@ -132,6 +135,7 @@ export default function AgentsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: formName,
+          username: formUsername.toUpperCase(),
           email: formEmail,
           password: formPassword,
           phone: formPhone || null,
@@ -461,6 +465,17 @@ export default function AgentsPage() {
                   onChange={(e) => setFormName(e.target.value)}
                 />
               </div>
+              {modal === "create" && (
+                <div>
+                  <label className="text-sm font-medium mb-1.5 block">Usuário de login *</label>
+                  <input
+                    className={inputClass}
+                    placeholder="Ex: MARIA (para login)"
+                    value={formUsername}
+                    onChange={(e) => setFormUsername(e.target.value.toUpperCase())}
+                  />
+                </div>
+              )}
               <div>
                 <label className="text-sm font-medium mb-1.5 block">Email *</label>
                 <input

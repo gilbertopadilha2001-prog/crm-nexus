@@ -8,23 +8,29 @@ datasource db {
 }
 
 model User {
-  id                  String    @id @default(cuid())
-  name                String
-  username            String    @unique
-  email               String    @unique
-  hashedPassword      String
-  role                String    @default("AGENT")
-  phone               String?
-  creci               String?
-  active              Boolean   @default(true)
-  avatar              String?
-  whatsappInstanceId  String?
-  whatsappPhone       String?
-  whatsappStatus      String    @default("disconnected")
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
+  id                 String    @id @default(cuid())
+  name               String
+  username           String    @unique
+  email              String    @unique
+  hashedPassword     String
+  role               String    @default("AGENT")
+  phone              String?
+  creci              String?
+  active             Boolean   @default(true)
+  avatar             String?
+  whatsappInstanceId String?
+  whatsappPhone      String?
+  whatsappStatus     String    @default("disconnected")
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
-  sessions Session[]
+  sessions       Session[]
+  leads          Lead[]         @relation("AgentLeads")
+  contacts       Contact[]      @relation("AgentContacts")
+  broadcasts     Broadcast[]    @relation("AgentBroadcasts")
+  followUps      FollowUp[]     @relation("AgentFollowUps")
+  visits         Visit[]        @relation("AgentVisits")
+  conversations  Conversation[] @relation("AgentConversations")
 
   @@map("users")
 }
@@ -37,4 +43,164 @@ model Session {
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("sessions")
+}
+
+model Lead {
+  id          String    @id @default(cuid())
+  name        String
+  phone       String
+  email       String?
+  stage       String    @default("novo")
+  notes       String?
+  interest    String?
+  value       Float?
+  source      String?
+  daysInStage Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  agentId    String?
+  agent      User?     @relation("AgentLeads", fields: [agentId], references: [id])
+
+  propertyId String?
+  property   Property? @relation(fields: [propertyId], references: [id])
+
+  followUps  FollowUp[]
+  visits     Visit[]
+
+  @@map("leads")
+}
+
+model Contact {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String   @unique
+  email     String?
+  source    String?
+  tags      String?
+  notes     String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  agentId String?
+  agent   User?    @relation("AgentContacts", fields: [agentId], references: [id])
+
+  @@map("contacts")
+}
+
+model Property {
+  id        String   @id @default(cuid())
+  title     String
+  type      String
+  region    String
+  price     Float
+  bedrooms  Int?
+  area      Float?
+  status    String   @default("available")
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  leads  Lead[]
+  visits Visit[]
+
+  @@map("properties")
+}
+
+model Broadcast {
+  id          String    @id @default(cuid())
+  name        String
+  message     String
+  status      String    @default("draft")
+  totalSent   Int       @default(0)
+  totalFailed Int       @default(0)
+  scheduledAt DateTime?
+  sentAt      DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  agentId String?
+  agent   User?   @relation("AgentBroadcasts", fields: [agentId], references: [id])
+
+  recipients BroadcastRecipient[]
+
+  @@map("broadcasts")
+}
+
+model BroadcastRecipient {
+  id          String    @id @default(cuid())
+  broadcastId String
+  broadcast   Broadcast @relation(fields: [broadcastId], references: [id], onDelete: Cascade)
+  phone       String
+  name        String?
+  status      String    @default("pending")
+  sentAt      DateTime?
+
+  @@map("broadcast_recipients")
+}
+
+model FollowUp {
+  id          String    @id @default(cuid())
+  leadId      String?
+  lead        Lead?     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  agentId     String?
+  agent       User?     @relation("AgentFollowUps", fields: [agentId], references: [id])
+  scheduledAt DateTime
+  done        Boolean   @default(false)
+  doneAt      DateTime?
+  notes       String?
+  type        String    @default("call")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("follow_ups")
+}
+
+model Visit {
+  id          String    @id @default(cuid())
+  leadId      String?
+  lead        Lead?     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  propertyId  String?
+  property    Property? @relation(fields: [propertyId], references: [id])
+  agentId     String?
+  agent       User?     @relation("AgentVisits", fields: [agentId], references: [id])
+  scheduledAt DateTime
+  status      String    @default("scheduled")
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("visits")
+}
+
+model Conversation {
+  id          String    @id @default(cuid())
+  phone       String    @unique
+  name        String?
+  unread      Int       @default(0)
+  lastMessage String?
+  lastAt      DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  agentId String?
+  agent   User?   @relation("AgentConversations", fields: [agentId], references: [id])
+
+  messages Message[]
+
+  @@map("conversations")
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  text           String
+  sent           Boolean      @default(false)
+  read           Boolean      @default(false)
+  remoteId       String?
+  createdAt      DateTime     @default(now())
+
+  @@map("messages")
 }
