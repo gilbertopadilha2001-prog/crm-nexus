@@ -48,3 +48,9 @@ next-env.d.ts
 # Local temp files
 temp/
 .env.production
+
+# Playwright debug snapshots
+.playwright-mcp/
+
+# Local screenshots
+*.png
