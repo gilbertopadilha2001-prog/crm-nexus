@@ -39,7 +39,9 @@ export async function POST() {
       headers: { "apikey": EVOLUTION_API_KEY },
     }).catch(() => {});
 
-    // Cria nova instância
+    const webhookUrl = `${process.env.AUTH_URL || "https://crm.nexusinovacoesimobiliarias.com.br"}/api/evolution/webhook`;
+
+    // Cria nova instância com webhook configurado
     const createRes = await fetch(`${EVOLUTION_API_URL}/instance/create`, {
       method: "POST",
       headers: { "apikey": EVOLUTION_API_KEY, "Content-Type": "application/json" },
@@ -47,6 +49,12 @@ export async function POST() {
         instanceName,
         qrcode: true,
         integration: "WHATSAPP-BAILEYS",
+        webhook: {
+          url: webhookUrl,
+          byEvents: true,
+          base64: false,
+          events: ["MESSAGES_UPSERT", "CONNECTION_UPDATE", "QRCODE_UPDATED"],
+        },
       }),
     });
 

@@ -1,98 +1,109 @@
 "use client";
 
-import { useState } from "react";
-import { Search, Send, Phone, Paperclip, Smile, Check, CheckCheck, Home, MapPin, DollarSign, User } from "lucide-react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { Search, Send, Loader2, MessageSquare } from "lucide-react";
+
+interface ConvSummary {
+  id: string;
+  phone: string;
+  name: string | null;
+  unread: number;
+  lastMessage: string | null;
+  lastAt: string | null;
+  agent: { id: string; name: string } | null;
+}
 
 interface Message {
   id: string;
   text: string;
-  time: string;
   sent: boolean;
   read: boolean;
+  createdAt: string;
 }
 
-interface Conversation {
-  id: string;
-  name: string;
-  phone: string;
-  lastMessage: string;
-  time: string;
-  unread: number;
-  avatar: string;
-  agent: string;
-  interest: { type: string; region: string; budget: string };
-  messages: Message[];
+function initials(name: string | null, phone: string) {
+  if (name) return name.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase();
+  return phone.slice(-4);
 }
 
-const conversations: Conversation[] = [
-  {
-    id: "1", name: "Maria Silva", phone: "(41) 99876-5432",
-    lastMessage: "Quero ver o apartamento de 2 quartos na Água Verde",
-    time: "5 min", unread: 3, avatar: "MS", agent: "Carlos",
-    interest: { type: "Apartamento 2Q", region: "Água Verde", budget: "R$ 280-350K" },
-    messages: [
-      { id: "m1", text: "Olá! Vi o anúncio do apartamento de 2 quartos na Água Verde", time: "14:20", sent: false, read: true },
-      { id: "m2", text: "Olá Maria! Tudo bem? Sim, esse apartamento ainda está disponível!", time: "14:22", sent: true, read: true },
-      { id: "m3", text: "Ótimo! Qual o valor?", time: "14:23", sent: false, read: true },
-      { id: "m4", text: "O valor é R$ 320.000. Aceita financiamento pelo Minha Casa Minha Vida.", time: "14:25", sent: true, read: true },
-      { id: "m5", text: "Que bom! Posso agendar uma visita?", time: "14:30", sent: false, read: true },
-      { id: "m6", text: "Quero ver o apartamento de 2 quartos na Água Verde", time: "14:45", sent: false, read: false },
-    ],
-  },
-  {
-    id: "2", name: "João Santos", phone: "(41) 98765-4321",
-    lastMessage: "Obrigado pelas fotos! Vou analisar", time: "15 min", unread: 0, avatar: "JS", agent: "Ana",
-    interest: { type: "Casa 3Q", region: "Santa Felicidade", budget: "R$ 500-650K" },
-    messages: [
-      { id: "m1", text: "Boa tarde! Procuro uma casa com 3 quartos na região de Santa Felicidade", time: "13:00", sent: false, read: true },
-      { id: "m2", text: "Boa tarde João! Temos ótimas opções. Vou enviar algumas fotos.", time: "13:05", sent: true, read: true },
-      { id: "m3", text: "Obrigado pelas fotos! Vou analisar", time: "13:30", sent: false, read: true },
-    ],
-  },
-  {
-    id: "3", name: "Fernanda Costa", phone: "(41) 97654-3210",
-    lastMessage: "Aprovei no financiamento!", time: "32 min", unread: 1, avatar: "FC", agent: "Pedro",
-    interest: { type: "MCMV", region: "Pinheirinho", budget: "R$ 170-200K" },
-    messages: [
-      { id: "m1", text: "Oi! Tenho interesse no programa Minha Casa Minha Vida", time: "11:00", sent: false, read: true },
-      { id: "m2", text: "Olá Fernanda! Temos condições especiais. Qual sua faixa de renda?", time: "11:05", sent: true, read: true },
-      { id: "m3", text: "Aprovei no financiamento!", time: "12:00", sent: false, read: false },
-    ],
-  },
-  {
-    id: "4", name: "Roberto Oliveira", phone: "(41) 96543-2109",
-    lastMessage: "Vamos fechar negócio então!", time: "1h", unread: 0, avatar: "RO", agent: "Carlos",
-    interest: { type: "Terreno", region: "Campo Largo", budget: "R$ 100-180K" },
-    messages: [
-      { id: "m1", text: "Procuro terreno na região de Campo Largo", time: "10:00", sent: false, read: true },
-      { id: "m2", text: "Vamos fechar negócio então!", time: "11:30", sent: false, read: true },
-    ],
-  },
-  {
-    id: "5", name: "Luciana Pereira", phone: "(41) 95432-1098",
-    lastMessage: "Qual a metragem exata?", time: "2h", unread: 2, avatar: "LP", agent: "Ana",
-    interest: { type: "Apartamento 3Q", region: "Batel", budget: "R$ 800K-1M" },
-    messages: [
-      { id: "m1", text: "Gostaria de saber mais sobre o apartamento no Batel", time: "09:00", sent: false, read: true },
-      { id: "m2", text: "Qual a metragem exata?", time: "09:30", sent: false, read: false },
-    ],
-  },
-];
+function fmtTime(iso: string | null) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const now = new Date();
+  const diff = (now.getTime() - d.getTime()) / 1000;
+  if (diff < 60) return "agora";
+  if (diff < 3600) return `${Math.floor(diff / 60)}min`;
+  if (diff < 86400) return d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+}
 
 export default function ConversationsPage() {
-  const [selected, setSelected] = useState(conversations[0]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [messageInput, setMessageInput] = useState("");
+  const [convs, setConvs] = useState<ConvSummary[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [search, setSearch] = useState("");
+  const [loadingConvs, setLoadingConvs] = useState(true);
+  const [loadingMsgs, setLoadingMsgs] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [input, setInput] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const filtered = conversations.filter(
+  const fetchConvs = useCallback(async () => {
+    const res = await fetch("/api/conversations");
+    if (res.ok) setConvs(await res.json());
+    setLoadingConvs(false);
+  }, []);
+
+  useEffect(() => { fetchConvs(); }, [fetchConvs]);
+
+  const selectConv = useCallback(async (id: string) => {
+    setSelectedId(id);
+    setLoadingMsgs(true);
+    setMessages([]);
+    const res = await fetch(`/api/conversations/${id}/messages`);
+    if (res.ok) {
+      const data = await res.json();
+      setMessages(data.messages || []);
+      setConvs((prev) => prev.map((c) => c.id === id ? { ...c, unread: 0 } : c));
+    }
+    setLoadingMsgs(false);
+  }, []);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const sendMessage = async () => {
+    if (!input.trim() || !selectedId || sending) return;
+    const text = input.trim();
+    setInput("");
+    setSending(true);
+    const optimistic: Message = { id: `tmp-${Date.now()}`, text, sent: true, read: false, createdAt: new Date().toISOString() };
+    setMessages((prev) => [...prev, optimistic]);
+    const res = await fetch(`/api/conversations/${selectedId}/messages`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setMessages((prev) => prev.map((m) => m.id === optimistic.id ? data.message : m));
+      setConvs((prev) => prev.map((c) => c.id === selectedId ? { ...c, lastMessage: text, lastAt: new Date().toISOString() } : c));
+    }
+    setSending(false);
+  };
+
+  const selectedConv = convs.find((c) => c.id === selectedId);
+
+  const filtered = convs.filter(
     (c) =>
-      c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.phone.includes(searchTerm)
+      (c.name || "").toLowerCase().includes(search.toLowerCase()) ||
+      c.phone.includes(search)
   );
 
   return (
     <div className="animate-fade-in -m-6 flex h-[calc(100vh-56px)]">
-      {/* Left — Conversation list */}
+      {/* Sidebar */}
       <div className="w-80 xl:w-96 border-r bg-card flex flex-col flex-shrink-0">
         <div className="p-3 border-b">
           <div className="relative">
@@ -100,139 +111,136 @@ export default function ConversationsPage() {
             <input
               type="text"
               placeholder="Buscar conversa..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
               className="w-full h-9 pl-9 pr-3 rounded-lg bg-muted/50 border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
             />
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto">
-          {filtered.map((conv) => (
-            <button
-              key={conv.id}
-              onClick={() => setSelected(conv)}
-              className={`w-full flex items-center gap-3 p-3 text-left hover:bg-muted/30 transition-colors border-b border-border/50 ${
-                selected.id === conv.id ? "bg-primary/5 border-l-2 border-l-primary" : ""
-              }`}
-            >
-              <div className="relative flex-shrink-0">
-                <div
-                  className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold"
-                  style={{ backgroundColor: "var(--nexus-gold)", color: "var(--nexus-dark)" }}
-                >
-                  {conv.avatar}
+          {loadingConvs ? (
+            <div className="flex items-center justify-center h-20">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="p-6 text-center text-sm text-muted-foreground">
+              Nenhuma conversa ainda.<br />
+              As mensagens do WhatsApp aparecem aqui.
+            </div>
+          ) : (
+            filtered.map((conv) => (
+              <button
+                key={conv.id}
+                onClick={() => selectConv(conv.id)}
+                className={`w-full flex items-center gap-3 p-3 text-left hover:bg-muted/30 transition-colors border-b border-border/50 ${
+                  selectedId === conv.id ? "bg-primary/5 border-l-2 border-l-primary" : ""
+                }`}
+              >
+                <div className="relative flex-shrink-0">
+                  <div
+                    className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold"
+                    style={{ backgroundColor: "var(--nexus-gold)", color: "var(--nexus-dark)" }}
+                  >
+                    {initials(conv.name, conv.phone)}
+                  </div>
+                  {conv.unread > 0 && (
+                    <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-green-500 text-[10px] font-bold text-white flex items-center justify-center">
+                      {conv.unread}
+                    </span>
+                  )}
                 </div>
-                {conv.unread > 0 && (
-                  <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-success text-[10px] font-bold text-white flex items-center justify-center">
-                    {conv.unread}
-                  </span>
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between">
-                  <p className={`text-sm truncate ${conv.unread > 0 ? "font-bold" : "font-medium"}`}>{conv.name}</p>
-                  <span className="text-[11px] text-muted-foreground flex-shrink-0">{conv.time}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <p className={`text-sm truncate ${conv.unread > 0 ? "font-bold" : "font-medium"}`}>
+                      {conv.name || conv.phone}
+                    </p>
+                    <span className="text-[11px] text-muted-foreground flex-shrink-0">{fmtTime(conv.lastAt)}</span>
+                  </div>
+                  <p className={`text-xs truncate ${conv.unread > 0 ? "text-foreground" : "text-muted-foreground"}`}>
+                    {conv.lastMessage || "Sem mensagens"}
+                  </p>
+                  {conv.agent && (
+                    <p className="text-[10px] mt-0.5" style={{ color: "var(--nexus-gold)" }}>{conv.agent.name}</p>
+                  )}
                 </div>
-                <p className={`text-xs truncate ${conv.unread > 0 ? "text-foreground" : "text-muted-foreground"}`}>{conv.lastMessage}</p>
-                <p className="text-[10px] mt-0.5" style={{ color: "var(--nexus-gold)" }}>{conv.agent}</p>
-              </div>
-            </button>
-          ))}
+              </button>
+            ))
+          )}
         </div>
       </div>
 
-      {/* Right — Chat area */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Chat header */}
-        <div className="h-14 border-b bg-card px-4 flex items-center justify-between flex-shrink-0">
-          <div className="flex items-center gap-3">
+      {/* Chat area */}
+      {!selectedId ? (
+        <div className="flex-1 flex items-center justify-center bg-muted/10">
+          <div className="text-center">
+            <MessageSquare className="h-12 w-12 mx-auto mb-3 text-muted-foreground opacity-30" />
+            <p className="text-sm text-muted-foreground">Selecione uma conversa</p>
+          </div>
+        </div>
+      ) : (
+        <div className="flex-1 flex flex-col min-w-0">
+          {/* Header */}
+          <div className="h-14 border-b bg-card px-4 flex items-center gap-3 flex-shrink-0">
             <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold"
               style={{ backgroundColor: "var(--nexus-gold)", color: "var(--nexus-dark)" }}>
-              {selected.avatar}
+              {selectedConv ? initials(selectedConv.name, selectedConv.phone) : "?"}
             </div>
             <div>
-              <p className="text-sm font-semibold">{selected.name}</p>
-              <p className="text-[11px] text-muted-foreground">{selected.phone} — {selected.agent}</p>
+              <p className="text-sm font-semibold">{selectedConv?.name || selectedConv?.phone}</p>
+              <p className="text-[11px] text-muted-foreground">
+                {selectedConv?.phone}
+                {selectedConv?.agent ? ` — ${selectedConv.agent.name}` : ""}
+              </p>
             </div>
           </div>
-          <button className="p-2 rounded-lg hover:bg-muted transition-colors">
-            <Phone className="h-4 w-4 text-muted-foreground" />
-          </button>
-        </div>
 
-        {/* Messages + Interest panel */}
-        <div className="flex-1 flex overflow-hidden">
+          {/* Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-3" style={{ backgroundColor: "#F0F2F5" }}>
-            {selected.messages.map((msg) => (
-              <div key={msg.id} className={`flex ${msg.sent ? "justify-end" : "justify-start"}`}>
-                <div className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm shadow-sm ${
-                  msg.sent ? "bg-[#DCF8C6] text-foreground rounded-br-md" : "bg-white text-foreground rounded-bl-md"
-                }`}>
-                  <p>{msg.text}</p>
-                  <div className={`flex items-center gap-1 mt-1 ${msg.sent ? "justify-end" : ""}`}>
-                    <span className="text-[10px] text-muted-foreground">{msg.time}</span>
-                    {msg.sent && (msg.read ? <CheckCheck className="h-3 w-3 text-blue-500" /> : <Check className="h-3 w-3 text-muted-foreground" />)}
+            {loadingMsgs ? (
+              <div className="flex items-center justify-center h-20">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              </div>
+            ) : messages.length === 0 ? (
+              <p className="text-center text-sm text-muted-foreground mt-8">Nenhuma mensagem ainda</p>
+            ) : (
+              messages.map((msg) => (
+                <div key={msg.id} className={`flex ${msg.sent ? "justify-end" : "justify-start"}`}>
+                  <div className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm shadow-sm ${
+                    msg.sent ? "bg-[#DCF8C6] text-foreground rounded-br-md" : "bg-white text-foreground rounded-bl-md"
+                  }`}>
+                    <p>{msg.text}</p>
+                    <span className="text-[10px] text-muted-foreground block text-right mt-0.5">
+                      {new Date(msg.createdAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                    </span>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
+            <div ref={messagesEndRef} />
           </div>
 
-          {/* Interest panel */}
-          <div className="w-60 border-l bg-card p-4 space-y-4 hidden xl:block overflow-y-auto">
-            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Interesse do Cliente</h4>
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Home className="h-4 w-4" style={{ color: "var(--nexus-gold)" }} />
-                <div>
-                  <p className="text-[11px] text-muted-foreground">Tipo</p>
-                  <p className="text-sm font-medium">{selected.interest.type}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <MapPin className="h-4 w-4" style={{ color: "var(--nexus-gold)" }} />
-                <div>
-                  <p className="text-[11px] text-muted-foreground">Região</p>
-                  <p className="text-sm font-medium">{selected.interest.region}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <DollarSign className="h-4 w-4" style={{ color: "var(--nexus-gold)" }} />
-                <div>
-                  <p className="text-[11px] text-muted-foreground">Orçamento</p>
-                  <p className="text-sm font-medium">{selected.interest.budget}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <User className="h-4 w-4" style={{ color: "var(--nexus-gold)" }} />
-                <div>
-                  <p className="text-[11px] text-muted-foreground">Corretor</p>
-                  <p className="text-sm font-medium">{selected.agent}</p>
-                </div>
-              </div>
-            </div>
-            <div className="pt-3 border-t">
-              <button className="w-full h-8 rounded-lg text-xs font-semibold transition-colors"
-                style={{ backgroundColor: "var(--nexus-gold)", color: "var(--nexus-dark)" }}>
-                Ver no Kanban
-              </button>
-            </div>
+          {/* Input */}
+          <div className="border-t bg-card p-3 flex items-center gap-2 flex-shrink-0">
+            <input
+              type="text"
+              placeholder="Digite uma mensagem..."
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
+              className="flex-1 h-10 px-4 rounded-xl bg-muted/50 border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+            />
+            <button
+              onClick={sendMessage}
+              disabled={sending || !input.trim()}
+              className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors disabled:opacity-50"
+              style={{ backgroundColor: "var(--nexus-gold)", color: "var(--nexus-dark)" }}
+            >
+              {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            </button>
           </div>
         </div>
-
-        {/* Message input */}
-        <div className="border-t bg-card p-3 flex items-center gap-2 flex-shrink-0">
-          <button className="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground"><Smile className="h-5 w-5" /></button>
-          <button className="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground"><Paperclip className="h-5 w-5" /></button>
-          <input type="text" placeholder="Digite uma mensagem..." value={messageInput} onChange={(e) => setMessageInput(e.target.value)}
-            className="flex-1 h-10 px-4 rounded-xl bg-muted/50 border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
-          <button className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors"
-            style={{ backgroundColor: "var(--nexus-gold)", color: "var(--nexus-dark)" }}>
-            <Send className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
+      )}
     </div>
   );
 }
