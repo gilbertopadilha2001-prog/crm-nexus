@@ -14,6 +14,8 @@ services:
       - AUTH_SECRET=nexus-crm-secret-key-change-in-production-2026
       - AUTH_URL=https://crm.nexusinovacoesimobiliarias.com.br
       - AUTH_TRUST_HOST=true
+      - EVOLUTION_API_URL=http://evolution_evolution_api:8080
+      - EVOLUTION_API_KEY=fb162b991c6f4acbef3975f26f1e8669
     deploy:
       mode: replicated
       replicas: 1
