@@ -85,6 +85,9 @@ FROM node:${NODE_VERSION} AS runner
 # Set working directory
 WORKDIR /app
 
+# Install OpenSSL for Prisma runtime
+RUN apt-get update -y && apt-get install -y openssl --no-install-recommends && rm -rf /var/lib/apt/lists/*
+
 # Set production environment variables
 ENV NODE_ENV=production
 ENV PORT=3000
